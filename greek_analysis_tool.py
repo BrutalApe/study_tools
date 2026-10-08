@@ -3,6 +3,11 @@ from tkinter import *
 from tkinter import ttk
 
 def main():
+    """
+    brief: Displays html pages (saved as HTML) from biblehub.com/interlinear/ as a searchable table of greek words.
+    param: Accepts a list of files, saved html pages.
+    return: None
+    """
 
     parser = argparse.ArgumentParser()
     parser.add_argument('filepaths', metavar='F', type=str, nargs='+', help='htm files to process')
@@ -11,7 +16,7 @@ def main():
     # This holds each word in the passage, containing dicts of each entry
     word_list = []
     word_fields_list = ["Book", "Chapter", "Verse", "Strongs Num", "Strongs Translation", "English Translit", "Greek", "Translation", "Grammar", "Grammar (Full)"]
-    field_sizes = [100, 60, 60, 100, 150, 150, 150, 150, 100, 450]
+    field_sizes = [120, 80, 80, 100, 150, 150, 150, 150, 100, 450]
 
     for filename in args.filepaths:
         print(f"Adding {filename}")
@@ -31,14 +36,12 @@ def main():
                 body_section = body.split("table class=\"tablefloat\"")
 
         # Find the book and chapter using this sketchy split chain
-        for init_part in body_section[0].split(" "):
-            if ("src" in init_part):
-                book_chapter_list = init_part.split("%20Interlinear")[0].split("src=\"")[1].split("%20")
-
         book = ""
-        for book_part in book_chapter_list[0:-1]:
-            book += f"{book_part} "
-        chapter = book_chapter_list[-1]
+        chapter = ""
+        for init_part in body_section[0].split(" "):
+            if ("cmenus" in init_part):
+                book = init_part.split("/")[2].replace("_"," ").title()
+                chapter = init_part.split("/")[3].split(".htm")[0]
 
         # Go word by word and separate out each part into the list of dicts
         # Track current verse by updating this var when reaching each new verse
@@ -68,7 +71,8 @@ def main():
                     element_dict[word_fields_list[8]] = element.split('>')[-1].split('<')[0]
                     element_dict[word_fields_list[9]] = element.split('"')[-2]
 
-            if element_dict != {}:
+            # Only add word if it has a Strong's number (Also prevents empty dicts from elements with no words)
+            if (word_fields_list[3] in element_dict):
                 word_list.append(element_dict)
 
     # Create a display of the generated info using tkinter
